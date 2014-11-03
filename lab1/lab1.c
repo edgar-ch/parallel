@@ -23,8 +23,9 @@ void *adler32(void *);
 
 const int MOD_ADLER = 65521;
 int ADLER_INIT = 0;
+pthread_mutex_t adler_mutex;
 
-int main()
+int main(int argc, char **argv)
 {
 	int i, fd, p_st;
 	size_t read_buf_size;
@@ -39,13 +40,16 @@ int main()
 	read_buf_size = ram_size() / RAM_USAGE;
 	buf = (uint8_t *) malloc(read_buf_size * sizeof(uint8_t));
 
-	fd = open("test.data", O_RDONLY);
+	fd = open(argv[1], O_RDONLY);
 	if (fd == -1) {
 		perror("open");
 		exit(EXIT_FAILURE);
 	}
-
+	// init mutex
+	pthread_mutex_init(&adler_mutex, NULL);
+	// main loop
 	while (1) {
+		// read data portion
 		bytes_read = read(fd, (void *) buf, read_buf_size);
 		if (bytes_read > 0) {
 			bytes_to_thread = bytes_read / thr_cnt;
@@ -82,10 +86,10 @@ int main()
 	// Calc final checksum
 	chksum = (chksum_b << 16) | chksum_a;
 
+	printf("MEM size: %ld\n", ram_size());
+	printf("Read BUFF size: %ld\n", read_buf_size);
+	printf("CPU Cores: %ld\n\n", proc_cnt());
 	printf("Checksum: 0x%xd\n", chksum);
-	printf("Mem size: %ld\n", ram_size());
-	printf("Read buf size: %ld\n", read_buf_size);
-	printf("Proc: %ld\n", proc_cnt());
 
 	close(fd);
 	exit(EXIT_SUCCESS);
@@ -111,12 +115,14 @@ void *adler32(void *args)
 	uint8_t *ptr;
 	ssize_t len = data_str->data_len;
 
+	pthread_mutex_lock(&adler_mutex);
 	if (!ADLER_INIT) {
 		a = 1, b = 0;
 		ADLER_INIT = ~ADLER_INIT;
 	} else {
 		a = 0, b = 0;
 	}
+	pthread_mutex_unlock(&adler_mutex);
 
 	for (ptr = data_str->data; ptr - data_str->data < len; ptr++) {
 		a = (a + *ptr) % MOD_ADLER;
