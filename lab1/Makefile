@@ -1,0 +1,14 @@
+CC=gcc
+CFLAGS=-Wall
+LDFLAGS=-pthread
+SOURCES=lab1.c
+OBJECTS=$(SOURCES:.c=.o)
+EXECUTABLE=lab1_hash
+
+all: $(EXECUTABLE)
+
+$(EXECUTABLE): $(OBJECTS)
+	$(CC) $(LDFLAGS) $(OBJECTS) -o $(EXECUTABLE)
+
+clean:
+	rm -rf $(OBJECTS) $(EXECUTABLE)
