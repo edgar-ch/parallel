@@ -18,8 +18,8 @@ struct hash64_args {
 	uint64_t chksum_b;
 };
 
-size_t ram_size();
-size_t proc_cnt();
+size_t ram_size(void);
+size_t proc_cnt(void);
 void *hash64(void *);
 
 int HASH_INIT = 0;
@@ -42,28 +42,28 @@ int main(int argc, char **argv)
 
 	while ((c = getopt(argc, argv, "sf:m:")) != -1) {
 		switch (c) {
-			case 's':
-				thr_cnt = 1;
-				break;
-			case 'f':
-				f_name = optarg;
-				break;
-			case 'm':
-				ram_usage = atoi(optarg);
-				if (ram_usage < 2) {
-					printf("Will use all avaliable mem, exit.");
-					exit(EXIT_FAILURE);
-				}
-				break;
-			case '?':
-				if (optopt == 'c')
-					printf("Option -%c requires an argument.\n",
-					optopt);
-				else
-					printf("Unknown option `-%c'.\n", optopt);
+		case 's':
+			thr_cnt = 1;
+			break;
+		case 'f':
+			f_name = optarg;
+			break;
+		case 'm':
+			ram_usage = atoi(optarg);
+			if (ram_usage < 2) {
+				printf("Will use all avaliable mem, exit.");
 				exit(EXIT_FAILURE);
-			default:
-				abort();
+			}
+			break;
+		case '?':
+			if (optopt == 'c')
+				printf("Option -%c requires an argument.\n",
+				optopt);
+			else
+				printf("Unknown option `-%c'.\n", optopt);
+			exit(EXIT_FAILURE);
+		default:
+			abort();
 		}
 	}
 
@@ -75,12 +75,12 @@ int main(int argc, char **argv)
 		perror("open");
 		exit(EXIT_FAILURE);
 	}
-	// init mutex
+	/* init mutex */
 	pthread_mutex_init(&hash_mutex, NULL);
 	time0 = time(NULL);
-	// main loop
+	/* main loop */
 	while (1) {
-		// read data portion
+		/* read data portion */
 		bytes_read = read(fd, (void *) buf, read_buf_size);
 		if (bytes_read > 0) {
 			bytes_to_thread = bytes_read / thr_cnt;
@@ -89,15 +89,16 @@ int main(int argc, char **argv)
 				thread_data[i].data_len = bytes_to_thread;
 			}
 			thread_data[i - 1].data_len += bytes_read % thr_cnt;
-			// start threads
+			/* start threads */
 			for (i = 0; i < thr_cnt; i++) {
-				p_st = pthread_create(&calc_threads[i], NULL, hash64, &thread_data[i]);
+				p_st = pthread_create(&calc_threads[i], NULL,
+										hash64, &thread_data[i]);
 				if (p_st) {
 					printf("Error in pthread_create: %d\n", p_st);
 					exit(EXIT_FAILURE);
 				}
 			}
-			// join threads
+			/* join threads */
 			for (i = 0; i < thr_cnt; i++) {
 				p_st = pthread_join(calc_threads[i], &stat);
 				if (p_st) {
@@ -114,7 +115,7 @@ int main(int argc, char **argv)
 			exit(EXIT_FAILURE);
 		}
 	}
-	// Calc final checksum
+	/* Calc final checksum */
 	chksum = (~chksum_b << 32) ^ chksum_a;
 	time1 = time(NULL);
 
@@ -128,7 +129,7 @@ int main(int argc, char **argv)
 	exit(EXIT_SUCCESS);
 }
 
-size_t ram_size()
+size_t ram_size(void)
 {
 	long pages = sysconf(_SC_PHYS_PAGES);
 	long page_size = sysconf(_SC_PAGE_SIZE);
@@ -136,7 +137,7 @@ size_t ram_size()
 	return pages * page_size;
 }
 
-size_t proc_cnt()
+size_t proc_cnt(void)
 {
 	return sysconf(_SC_NPROCESSORS_ONLN);
 }
