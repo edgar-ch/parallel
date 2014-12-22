@@ -5,7 +5,7 @@
 
 int main(int argc, char **argv)
 {
-	int flag;
+	int flag = 1;
 	unsigned long int i, numb, res;
 	double elapsed_time, wall_timer;
 
