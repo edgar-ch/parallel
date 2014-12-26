@@ -13,11 +13,11 @@ int main(int argc, char **argv)
 	scanf("%ld", &numb);
 
 	wall_timer = omp_get_wtime();
-	#pragma omp parallel for private(numb, res)
+	#pragma omp parallel for private(res)
 	for (i = 3; i < numb; i++) {
 		res = numb % i;
 		if (res == 0) {
-			#pragma omp critical
+			//#pragma omp critical
 			flag = 0;
 		}
 	}
